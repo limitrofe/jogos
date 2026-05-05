@@ -26,6 +26,8 @@
       height: 100%;
       margin: 0;
       overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
     }
 
     body {
@@ -36,6 +38,7 @@
       display: block;
       width: 100%;
       height: 100%;
+      touch-action: none;
     }
 
     .hud {
@@ -241,10 +244,122 @@
       pointer-events: none;
     }
 
+    .touch-controls {
+      position: fixed;
+      inset: 0;
+      display: none;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .touch-stick {
+      position: absolute;
+      left: max(18px, env(safe-area-inset-left));
+      bottom: max(22px, env(safe-area-inset-bottom));
+      width: 132px;
+      height: 132px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 50%;
+      background: rgba(8, 12, 20, 0.38);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+      pointer-events: auto;
+      touch-action: none;
+      backdrop-filter: blur(14px);
+    }
+
+    .touch-thumb {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 58px;
+      height: 58px;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      border-radius: 50%;
+      background: rgba(47, 125, 246, 0.72);
+      box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.08), 0 12px 28px rgba(0, 0, 0, 0.24);
+      transform: translate(-50%, -50%);
+    }
+
+    .touch-buttons {
+      position: absolute;
+      right: max(14px, env(safe-area-inset-right));
+      bottom: max(16px, env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: repeat(3, 58px);
+      grid-template-rows: repeat(3, 58px);
+      gap: 9px;
+      pointer-events: auto;
+      touch-action: none;
+    }
+
+    .touch-btn {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 50%;
+      background: rgba(9, 12, 20, 0.64);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 950;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+      user-select: none;
+      -webkit-user-select: none;
+      backdrop-filter: blur(14px);
+    }
+
+    .touch-btn:active,
+    .touch-btn.active {
+      background: rgba(243, 201, 68, 0.78);
+      color: #111522;
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .touch-btn[data-action="y"] {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .touch-btn[data-action="x"] {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .touch-btn[data-action="a"] {
+      grid-column: 2;
+      grid-row: 3;
+    }
+
+    .touch-btn[data-action="b"] {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .touch-btn[data-action="rb"] {
+      grid-column: 3;
+      grid-row: 1;
+      width: 62px;
+      height: 42px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
     @media (max-width: 720px) {
       .side-panel {
-        top: auto;
-        bottom: 10px;
+        top: 76px;
+        bottom: auto;
+        width: min(178px, calc(100vw - 20px));
+      }
+
+      .stat {
+        gap: 5px;
+        padding: 9px 10px;
+        font-size: 10px;
+      }
+
+      .stat strong {
+        font-size: 13px;
       }
 
       .corner {
@@ -257,6 +372,41 @@
 
       .team {
         font-size: 12px;
+      }
+    }
+
+    @media (pointer: coarse), (max-width: 920px) {
+      .touch-controls {
+        display: block;
+      }
+    }
+
+    @media (max-height: 480px) and (orientation: landscape) {
+      .touch-stick {
+        width: 116px;
+        height: 116px;
+      }
+
+      .touch-thumb {
+        width: 50px;
+        height: 50px;
+      }
+
+      .touch-buttons {
+        grid-template-columns: repeat(3, 52px);
+        grid-template-rows: repeat(3, 52px);
+        gap: 7px;
+      }
+
+      .touch-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 15px;
+      }
+
+      .touch-btn[data-action="rb"] {
+        width: 56px;
+        height: 38px;
       }
     }
   </style>
@@ -294,6 +444,18 @@
       <span class="pill">SPACE</span>
       <span class="pill">Q</span>
       <span id="gamepadStatus" class="pill">PAD OFF</span>
+    </div>
+  </div>
+  <div id="touchControls" class="touch-controls" aria-label="Touch controls">
+    <div id="touchStick" class="touch-stick" aria-label="Move">
+      <div id="touchThumb" class="touch-thumb"></div>
+    </div>
+    <div class="touch-buttons" aria-label="Actions">
+      <button class="touch-btn" data-action="y" type="button">Y</button>
+      <button class="touch-btn" data-action="x" type="button">X</button>
+      <button class="touch-btn" data-action="b" type="button">B</button>
+      <button class="touch-btn" data-action="a" type="button">A</button>
+      <button class="touch-btn" data-action="rb" type="button">RB</button>
     </div>
   </div>
 
@@ -360,6 +522,13 @@
       peaks: [],
     };
 
+    const touchInput = {
+      move: new THREE.Vector3(),
+      sprint: false,
+      stickPointer: null,
+      buttonStarts: {},
+    };
+
     const players = [];
     const homePlayers = [];
     const awayPlayers = [];
@@ -372,6 +541,9 @@
       powerFill: document.getElementById("powerFill"),
       possession: document.getElementById("possession"),
       gamepadStatus: document.getElementById("gamepadStatus"),
+      touchControls: document.getElementById("touchControls"),
+      touchStick: document.getElementById("touchStick"),
+      touchThumb: document.getElementById("touchThumb"),
       toast: document.getElementById("toast"),
     };
 
@@ -430,6 +602,7 @@
       createBall();
       resetKickoff();
       bindInput();
+      setupTouchControls();
       window.addEventListener("resize", onResize);
       setTimeout(() => ui.loading.classList.add("hide"), 350);
     }
@@ -1131,6 +1304,92 @@
       });
     }
 
+    function setupTouchControls() {
+      if (!ui.touchControls || !ui.touchStick || !ui.touchThumb) return;
+
+      ui.touchControls.addEventListener("contextmenu", (event) => event.preventDefault());
+
+      ui.touchStick.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        touchInput.stickPointer = event.pointerId;
+        ui.touchStick.setPointerCapture(event.pointerId);
+        updateTouchStick(event);
+      });
+
+      ui.touchStick.addEventListener("pointermove", (event) => {
+        if (event.pointerId !== touchInput.stickPointer) return;
+        event.preventDefault();
+        updateTouchStick(event);
+      });
+
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach((type) => {
+        ui.touchStick.addEventListener(type, (event) => {
+          if (event.pointerId !== touchInput.stickPointer && type !== "lostpointercapture") return;
+          resetTouchStick();
+        });
+      });
+
+      ui.touchControls.querySelectorAll(".touch-btn").forEach((button) => {
+        button.addEventListener("pointerdown", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          button.setPointerCapture(event.pointerId);
+          button.classList.add("active");
+          const action = button.dataset.action;
+          touchInput.buttonStarts[action] = performance.now();
+          if (action === "rb") touchInput.sprint = true;
+          if (action === "b" && !selectedCanUseBall(2.7)) switchToClosestBallPlayer();
+        });
+
+        const release = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          button.classList.remove("active");
+          const action = button.dataset.action;
+          const held = ((performance.now() - (touchInput.buttonStarts[action] || performance.now())) / 1000);
+          touchInput.buttonStarts[action] = 0;
+          if (action === "rb") {
+            touchInput.sprint = false;
+            return;
+          }
+          handleTouchAction(action, held);
+        };
+
+        button.addEventListener("pointerup", release);
+        button.addEventListener("pointercancel", release);
+      });
+    }
+
+    function updateTouchStick(event) {
+      const rect = ui.touchStick.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const max = rect.width * 0.34;
+      const dx = event.clientX - centerX;
+      const dy = event.clientY - centerY;
+      const distance = Math.hypot(dx, dy);
+      const scale = distance > max ? max / distance : 1;
+      const x = dx * scale;
+      const y = dy * scale;
+      touchInput.move.set(x / max, 0, y / max);
+      if (touchInput.move.lengthSq() > 1) touchInput.move.normalize();
+      ui.touchThumb.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+    }
+
+    function resetTouchStick() {
+      touchInput.stickPointer = null;
+      touchInput.move.set(0, 0, 0);
+      ui.touchThumb.style.transform = "translate(-50%, -50%)";
+    }
+
+    function handleTouchAction(action, held) {
+      if (action === "b") handlePassButton(held, 1);
+      if (action === "a") attemptTackle(held > 0.24);
+      if (action === "y") handleThroughButton(held, 1);
+      if (action === "x") handleShootButton(held, 1);
+    }
+
     function animate() {
       const rawDt = Math.min(clock.getDelta(), 0.033);
       const dt = rawDt * (matchTime > 0 ? 1 : 0);
@@ -1275,17 +1534,17 @@
     function inputVector() {
       const x = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0);
       const z = (keys.has("KeyS") ? 1 : 0) - (keys.has("KeyW") ? 1 : 0);
-      const v = new THREE.Vector3(x, 0, z).add(gamepadInput.move);
+      const v = new THREE.Vector3(x, 0, z).add(gamepadInput.move).add(touchInput.move);
       if (v.lengthSq() > 0) v.normalize();
       return v;
     }
 
     function isSprinting() {
-      return keys.has("ShiftLeft") || keys.has("ShiftRight") || gamepadInput.sprint;
+      return keys.has("ShiftLeft") || keys.has("ShiftRight") || gamepadInput.sprint || touchInput.sprint;
     }
 
     function getControlledSpeed() {
-      if (gamepadInput.sprint) return 21;
+      if (gamepadInput.sprint || touchInput.sprint) return 21;
       return isSprinting() ? 16 : 10.5;
     }
 
