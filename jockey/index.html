@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Jockey World Circuit 3D</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="race-canvas" aria-label="Jockey World Circuit 3D"></canvas>
+
+      <section id="selection" class="selection">
+        <div class="selection__copy">
+          <p class="eyebrow">World Circuit 3D</p>
+          <h1>Jockey Club</h1>
+          <p>
+            Escolha seu conjunto e cadence o ritmo por tres voltas: sol, chuva
+            e neve mudam a pista, a energia e o final da corrida.
+          </p>
+        </div>
+        <div id="horse-grid" class="horse-grid"></div>
+      </section>
+
+      <section id="hud" class="hud hidden" aria-live="polite">
+        <div class="hud__top">
+          <div class="hud-card compact">
+            <span class="label">Posição</span>
+            <strong id="rank">1/8</strong>
+          </div>
+          <div class="hud-card">
+            <span class="label">Energia</span>
+            <div class="meter"><i id="energy-bar"></i></div>
+            <span id="energy-text">100%</span>
+            <span class="label muted">Desgaste</span>
+            <div class="meter wear"><i id="wear-bar"></i></div>
+            <span id="wear-text">0%</span>
+          </div>
+          <div class="hud-card">
+            <span class="label">Clima</span>
+            <strong id="weather">Sol</strong>
+            <span id="venue">Ascot</span>
+          </div>
+          <div class="hud-card compact">
+            <span class="label">Volta</span>
+            <strong id="lap">1/3</strong>
+          </div>
+        </div>
+
+        <div class="hud__bottom">
+          <button id="left-btn" class="icon-btn" type="button" aria-label="Ir para a esquerda">‹</button>
+          <div class="pace-panel">
+            <div class="pace-panel__meta">
+              <span>Cadência</span>
+              <strong id="pace-value">62</strong>
+            </div>
+            <div class="rhythm-meter"><i id="cadence-bar"></i></div>
+            <div class="pace-panel__hint">
+              <span>Solto</span>
+              <span>Forçado</span>
+            </div>
+            <button id="advance-btn" class="advance-btn" type="button" aria-label="Avançar">Avançar</button>
+          </div>
+          <button id="right-btn" class="icon-btn" type="button" aria-label="Ir para a direita">›</button>
+        </div>
+      </section>
+
+      <section id="result" class="result hidden">
+        <div class="result__panel">
+          <p class="eyebrow">Resultado</p>
+          <h2 id="result-title">Vitoria!</h2>
+          <p id="result-copy"></p>
+          <div id="podium" class="podium"></div>
+          <button id="restart" class="primary-btn" type="button">Correr de novo</button>
+        </div>
+      </section>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

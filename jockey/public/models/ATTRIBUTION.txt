@@ -1,0 +1,9 @@
+Horse.glb
+Source: three.js official examples, examples/models/gltf/Horse.glb
+Repository: https://github.com/mrdoob/three.js
+License: MIT
+
+Tree Small 02
+Source: Poly Haven
+URL: https://polyhaven.com/a/tree_small_02
+License: CC0
